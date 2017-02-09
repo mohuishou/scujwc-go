@@ -13,7 +13,7 @@ import (
 
 var s scujwc.Jwc
 
-func login() {
+func login(w http.ResponseWriter, r *http.Request) {
 
 }
 
@@ -30,11 +30,13 @@ func gpaNotPass() {
 }
 
 func isLoginHandler(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, "123")
+	})
 }
 
 func main() {
-	http.HandleFunc("/", index)
+	http.HandleFunc("/", login)
 
 	if err := http.ListenAndServe("0.0.0.0:8080", nil); err != nil {
 		log.Fatal("ListenAndServe: ", err)

@@ -6,14 +6,14 @@ import "strings"
 
 //Grades 成绩
 type Grades struct {
-	CourseID   string
-	LessonID   string
-	CourseName string
-	Credit     string
-	CourseType string
-	Grade      string
-	Term       int
-	TermName   string
+	CourseID   string `json:"course_id"`
+	LessonID   string `json:"lesson_id"`
+	CourseName string `json:"course_name"`
+	Credit     string `json:"credit"`
+	CourseType string `json:"course_type"`
+	Grade      string `json:"grade"`
+	Term       int    `json:"term"`
+	TermName   string `json:"term_name"`
 }
 
 //GPA 获取本学期成绩
