@@ -27,10 +27,15 @@ type Jwc struct {
 }
 
 //Init 初始化学号和密码
-func (j *Jwc) Init(uid int, password string) {
+func (j *Jwc) Init(uid int, password string) error {
 	j.password = password
 	j.uid = uid
 	j.initHTTP()
+	err := j.Login()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 //initHTTP 初始化请求客户端
