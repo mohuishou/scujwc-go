@@ -63,6 +63,13 @@ func (j *Jwc) Login() (err error) {
 	return nil
 }
 
+//Logout 退出登录
+func (j *Jwc) Logout() (err error) {
+	url := DOMAIN + "logout.do"
+	_, err = j.post(url, "loginType=platformLogin")
+	return err
+}
+
 //post 发出post请求
 func (j *Jwc) post(url, param string) (*goquery.Document, error) {
 	req, err := http.NewRequest("POST", url, strings.NewReader(param))

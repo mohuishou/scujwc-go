@@ -23,6 +23,7 @@ func (j *Jwc) GPA() ([]Grades, error) {
 		err := errors.New("尚未登录，请先登录！")
 		return nil, err
 	}
+	defer j.Logout()
 
 	//获取goquery.Document 对象，以便解析需要的数据
 	url := DOMAIN + "/bxqcjcxAction.do"
@@ -62,6 +63,7 @@ func (j *Jwc) GPAAll() ([][]Grades, error) {
 		err := errors.New("尚未登录，请先登录！")
 		return nil, err
 	}
+	defer j.Logout()
 
 	//获取goquery.Document 对象，以便解析需要的数据
 	url := DOMAIN + "/gradeLnAllAction.do"
@@ -111,6 +113,8 @@ func (j *Jwc) GPANotPass() ([][]Grades, error) {
 		err := errors.New("尚未登录，请先登录！")
 		return nil, err
 	}
+	defer j.Logout()
+
 	url := DOMAIN + "/gradeLnAllAction.do"
 	doc, err := j.post(url, "type=ln&oper=bjg")
 	if err != nil {
@@ -133,7 +137,7 @@ func (j *Jwc) GPANotPass() ([][]Grades, error) {
 			g.Credit = strings.TrimSpace(s.Find("td").Eq(4).Text())
 			g.CourseType = strings.TrimSpace(s.Find("td").Eq(5).Text())
 			g.Grade = strings.TrimSpace(s.Find("td").Eq(6).Text())
-			if count > 1 {
+			if count > 0 {
 				grade = append(grade, g)
 			} else {
 				grade[count] = g
