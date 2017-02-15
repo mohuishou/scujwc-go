@@ -87,8 +87,10 @@ func main() {
 	http.HandleFunc("/gpa/all", gpaAll)
 	http.HandleFunc("/gpa/not-pass", gpaNotPass)
 
-	if err := http.ListenAndServe("0.0.0.0:8080", nil); err != nil {
+	if err := http.ListenAndServe("0.0.0.0:6627", nil); err != nil {
 		log.Fatal("ListenAndServe: ", err)
+	} else {
+		fmt.Println("服务启动成功...端口：6627")
 	}
 }
 

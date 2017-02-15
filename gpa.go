@@ -1,8 +1,11 @@
 package scujwc
 
-import "errors"
-import "github.com/PuerkitoBio/goquery"
-import "strings"
+import (
+	"errors"
+	"github.com/PuerkitoBio/goquery"
+	"strings"
+)
+
 
 //Grades 成绩
 type Grades struct {
