@@ -23,7 +23,7 @@ type Jwc struct {
 	uid      int
 	password string
 	client   http.Client
-	isLogin  int
+	isLogin  int //登录判断 1：已登录，0：尚未登录
 }
 
 //Init 初始化学号和密码
@@ -67,7 +67,20 @@ func (j *Jwc) Login() (err error) {
 func (j *Jwc) Logout() (err error) {
 	url := DOMAIN + "logout.do"
 	_, err = j.post(url, "loginType=platformLogin")
+	j.isLogin=0
 	return err
+}
+
+// 发出post请求，用于教务处登录之后
+func (j *Jwc) jPost(url, param string) (*goquery.Document, error){
+	if j.isLogin == 0 {
+		err := errors.New("尚未登录，请先登录！")
+		return nil, err
+	}
+
+	defer j.Logout()
+
+	return j.post(url,param)
 }
 
 //post 发出post请求
