@@ -12,11 +12,11 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
-	p, err := scujwc.Str2proc("[999008030]中华文化（艺术篇）", "0")
+	// p, err := scujwc.Str2proc("[999008030]中华文化（艺术篇）", "0")
 
-	// err = j.Project()
+	_, err = j.Project()
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(p)
+	// fmt.Println(p)
 }
