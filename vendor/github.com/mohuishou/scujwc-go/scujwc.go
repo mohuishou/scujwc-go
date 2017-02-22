@@ -67,12 +67,12 @@ func (j *Jwc) Login() (err error) {
 func (j *Jwc) Logout() (err error) {
 	url := DOMAIN + "logout.do"
 	_, err = j.post(url, "loginType=platformLogin")
-	j.isLogin = 0
+	j.isLogin=0
 	return err
 }
 
 // 发出post请求，用于教务处登录之后
-func (j *Jwc) jPost(url, param string) (*goquery.Document, error) {
+func (j *Jwc) jPost(url, param string) (*goquery.Document, error){
 	if j.isLogin == 0 {
 		err := errors.New("尚未登录，请先登录！")
 		return nil, err
@@ -80,12 +80,11 @@ func (j *Jwc) jPost(url, param string) (*goquery.Document, error) {
 
 	defer j.Logout()
 
-	return j.post(url, param)
+	return j.post(url,param)
 }
 
 //post 发出post请求
 func (j *Jwc) post(url, param string) (*goquery.Document, error) {
-	//todo: 设置超时时间
 	req, err := http.NewRequest("POST", url, strings.NewReader(param))
 	if err != nil {
 		return nil, err
