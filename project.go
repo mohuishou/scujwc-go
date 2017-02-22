@@ -2,7 +2,6 @@ package scujwc
 
 import (
 	"errors"
-	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -29,27 +28,39 @@ type Project struct {
 	CourseFail   string `json:"course_fail"`
 }
 
+//ProjectResult 1
+type ProjectResult struct {
+	Project
+	Required Projects
+	Choose   Projects
+}
+
+//Projects 1
+type Projects struct {
+	Project
+	Courses []ProjectCourse
+}
+
 //Project 获取培养方案
-func (j *Jwc) Project() (data map[Project]map[Project][]ProjectCourse, err error) {
-	fmt.Println("**************************匹配开始******************************")
+func (j *Jwc) Project() (data []ProjectResult, err error) {
 
 	//获取goquery.Document 对象，以便解析需要的数据
 	url := DOMAIN + "/gradeLnAllAction.do"
 	doc, err := j.jPost(url, "type=ln&oper=lnfaqk&flag=zx")
 	if err != nil {
-		return nil, err
+		return data, err
 	}
 
 	//由于该网页由js动态渲染得到,所以通过html字符串，正则匹配得到
 	html, err := doc.Html()
 	if err != nil {
-		return nil, err
+		return data, err
 	}
 
 	//首先去除所有的换行符
 	re, err := regexp.Compile(`\s`)
 	if err != nil {
-		return nil, err
+		return data, err
 	}
 
 	html = re.ReplaceAllString(html, "")
@@ -57,14 +68,14 @@ func (j *Jwc) Project() (data map[Project]map[Project][]ProjectCourse, err error
 	//匹配到调用js函数当中所需的参数值
 	re, err = regexp.Compile(`add\((.*?)\);`)
 	if err != nil {
-		return nil, err
+		return data, err
 	}
 	s := re.FindAllStringSubmatch(html, -1)
 
 	//去除所有的引号
 	re, err = regexp.Compile(`"|'`)
 	if err != nil {
-		return nil, err
+		return data, err
 	}
 
 	/*params
@@ -101,38 +112,44 @@ func (j *Jwc) Project() (data map[Project]map[Project][]ProjectCourse, err error
 	}
 
 	//TODO: 将参数值排序获得所需的数据
-	data = make(map[Project]map[Project][]ProjectCourse)
+
+	data = make([]ProjectResult, 0)
+	var projectRes ProjectResult
+	var projects Projects
+
 	//第一次获取根节点
 	node0, err := getProNode(params, "-1")
 	if err != nil {
-		return nil, err
+		return data, err
 	}
 	for k, v := range node0 {
-		data2, ok := data[v]
-		if !ok {
-			data2 = make(map[Project][]ProjectCourse)
-			data[v] = data2
-		}
-		//不对中华文化和校任选做进一步分析
+		projectRes.Project = v
 		t, err := strconv.Atoi(k)
 		if err != nil {
-			return nil, err
+			return data, err
 		}
+		//不对中华文化和校任选做进一步分析
 		if t < 10 {
 			node1, err := getProNode(params, k)
 			if err != nil {
-				return nil, err
+				return data, err
 			}
+			i := 0
 			for key, val := range node1 {
-				node2, err := getProcNode(params, key)
+				projects.Project = val
+				projects.Courses, err = getProcNode(params, key)
 				if err != nil {
-					return nil, err
+					return data, err
 				}
-				data2[val] = node2
+				if i == 0 {
+					projectRes.Required = projects
+				} else {
+					projectRes.Choose = projects
+				}
 			}
+			data = append(data, projectRes)
 		}
 	}
-	fmt.Println(data)
 
 	return data, err
 }

@@ -1,5 +1,5 @@
-hash: 7d96b06dfe1e378b72914c555a3dae3064dd4a6d9c70a9525e46ee952bd7f9b3
-updated: 2017-02-19T18:18:53.3694213+08:00
+hash: 4f63593a7434309c1b67c63515758806497208fc3210db7fd96292d4eafae2ad
+updated: 2017-02-23T00:47:30.313178+08:00
 imports:
 - name: github.com/andybalholm/cascadia
   version: 349dd0209470eabd9514242c688c403c0926d266
@@ -11,6 +11,10 @@ imports:
   version: e1271ee34c6a305e38566ecd27ae374944907ee9
 - name: github.com/qiniu/iconv
   version: 95b6ba6f738637e4699b12cce9fad646e8bd9f24
-- name: golang.org/x/net/html
+- name: golang.org/x/net
   version: 6b27048ae5e6ad1ef927e72e437531493de612fe
+  repo: https://github.com/golang/net
+  subpackages:
+  - html
+  - html/atom
 testImports: []

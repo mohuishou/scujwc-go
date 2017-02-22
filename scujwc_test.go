@@ -1,28 +1,27 @@
-package main
+package scujwc
 
 import (
-	"fmt"
-
-	scujwc "github.com/scujwc-go"
-
 	"encoding/json"
+	"fmt"
+	"testing"
 )
 
-func main() {
-	var j scujwc.Jwc
+func Test_project(t *testing.T) {
+	var j Jwc
 	err := j.Init(2014141453066, "lailin123")
 	if err != nil {
 		fmt.Println(err)
 	}
-	// p, err := scujwc.Str2proc("[999008030]中华文化（艺术篇）", "0")
-
 	data, err := j.Project()
+
+	fmt.Println(data)
 	if err != nil {
 		fmt.Println(err)
 	}
 	a, err := json.Marshal(data)
 	if err != nil {
+		t.Error(err)
 		fmt.Println(err)
 	}
-	fmt.Println(a)
+	fmt.Println(string(a))
 }
