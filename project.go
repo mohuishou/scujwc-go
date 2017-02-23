@@ -146,6 +146,7 @@ func (j *Jwc) Project() (data []ProjectResult, err error) {
 				} else {
 					projectRes.Choose = projects
 				}
+				i++
 			}
 			data = append(data, projectRes)
 		}
