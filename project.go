@@ -149,6 +149,9 @@ func (j *Jwc) Project() (data []ProjectResult, err error) {
 				i++
 			}
 			data = append(data, projectRes)
+		} else {
+			//中华文化与校任选
+			data = append(data, projectRes)
 		}
 	}
 
