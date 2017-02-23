@@ -151,6 +151,8 @@ func (j *Jwc) Project() (data []ProjectResult, err error) {
 			data = append(data, projectRes)
 		} else {
 			//中华文化与校任选
+			projectRes.Required = Projects{}
+			projectRes.Choose = Projects{}
 			data = append(data, projectRes)
 		}
 	}

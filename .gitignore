@@ -1,0 +1,3 @@
+*.exe
+main.go
+config.json
