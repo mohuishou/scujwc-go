@@ -80,7 +80,6 @@ func (j *Jwc) Project() (data []ProjectResult, err error) {
 
 	/*params
 	用来保存抓取到的参数值
-
 	参数值说明：
 	[
 		0  // id
@@ -110,8 +109,6 @@ func (j *Jwc) Project() (data []ProjectResult, err error) {
 		}
 
 	}
-
-	//TODO: 将参数值排序获得所需的数据
 
 	data = make([]ProjectResult, 0)
 	var projectRes ProjectResult

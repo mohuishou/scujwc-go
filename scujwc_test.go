@@ -2,12 +2,19 @@ package scujwc
 
 import "testing"
 
-func Test_project(t *testing.T) {
-	// var j Jwc
-	// err := j.Init(2014141453066, "lailin123")
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
+var (
+	j Jwc
+)
+
+// 测试初始化
+func TestInit(t *testing.T) {
+	err := j.Init(2014141453066, "lailin123")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestProject(t *testing.T) {
 	// data, err := j.Project()
 
 	// fmt.Println(data)
@@ -20,4 +27,9 @@ func Test_project(t *testing.T) {
 	// 	fmt.Println(err)
 	// }
 	// fmt.Println(string(a))
+}
+
+//TestSchedule 测试课程表
+func TestSchedule(t *testing.T) {
+	_, _ = j.Schedule()
 }
