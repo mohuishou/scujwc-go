@@ -1,18 +1,18 @@
-hash: 4f63593a7434309c1b67c63515758806497208fc3210db7fd96292d4eafae2ad
-updated: 2017-02-23T00:47:30.313178+08:00
+hash: 01c3a8fb71566a97e959b903aafdbc05804cfa257fe7bb0ed9a9c6cc2c8f6844
+updated: 2017-02-25T00:25:37.0511378+08:00
 imports:
 - name: github.com/andybalholm/cascadia
   version: 349dd0209470eabd9514242c688c403c0926d266
 - name: github.com/goless/config
   version: 4a75af734f1d4b753e4edf282c868b68e850e205
-- name: github.com/mohuishou/scujwc-go
-  version: 087fefe392e83b2a432012f40c2adba09c39e1fa
+- name: github.com/jordic/goics
+  version: 482aa91d823471674f535b8a0f2dbfffd9c3585f
 - name: github.com/PuerkitoBio/goquery
   version: e1271ee34c6a305e38566ecd27ae374944907ee9
 - name: github.com/qiniu/iconv
   version: 95b6ba6f738637e4699b12cce9fad646e8bd9f24
 - name: golang.org/x/net
-  version: 6b27048ae5e6ad1ef927e72e437531493de612fe
+  version: dd2d9a67c97da0afa00d5726e28086007a0acce5
   repo: https://github.com/golang/net
   subpackages:
   - html

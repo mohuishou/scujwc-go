@@ -9,3 +9,4 @@ import:
   repo: https://github.com/golang/net
   subpackages:
   - html
+- package: github.com/jordic/goics

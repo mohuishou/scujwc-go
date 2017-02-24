@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/jordic/goics"
 )
 
 //ScheduleData 课程数据
@@ -72,5 +73,36 @@ func (j *Jwc) Schedule() (data []ScheduleData, err error) {
 	})
 	fmt.Println(data)
 	return data, nil
+}
 
+//ScheduleIcal 生成日历
+func (j *Jwc) ScheduleIcal() error {
+
+	//基本信息设置
+	c := goics.NewComponent()
+	c.SetType("VCALENDAR")
+	c.AddProperty("CALSCAL", "GREGORIAN")
+	c.AddProperty("VERSION", "2.0")
+	c.AddProperty("X-WR-CALNAME", "SCUPLUS-课表")
+	c.AddProperty("X-WR-TIMEZONE", "Asia/Shanghai")
+	c.AddProperty("VERSION", "2.0")
+	c.AddProperty("VERSION", "2.0")
+	c.AddProperty("VERSION", "2.0")
+	c.AddProperty("PRODID", "-//Mohuishou//SCUPLUS//FYSCU")
+
+	vtime := goics.NewComponent()
+	vtime.SetType("VTIMEZONE")
+	vtime.AddProperty("TZID", "Asia/Shanghai")
+	vtime.AddProperty("X-LIC-LOCATION", "Asia/Shanghai")
+
+	standard := goics.NewComponent()
+	standard.AddProperty("TZOFFSETFROM", "+0800")
+	standard.AddProperty("TZOFFSETTO", "+0800")
+	standard.AddProperty("TZNAME", "CST")
+	standard.AddProperty("DTSTART", "19700101T000000")
+
+	vtime.AddComponent(standard)
+	c.AddComponent(vtime)
+
+	return nil
 }
