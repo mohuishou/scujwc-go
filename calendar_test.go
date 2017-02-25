@@ -11,7 +11,7 @@ func Test_1(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ical, err := j.Canlendar()
+	ical, err := j.Calendar()
 	if err != nil {
 		t.Fatal(err)
 	}

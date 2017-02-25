@@ -99,6 +99,7 @@ func (j *Jwc) Calendar() (ical Ical, err error) {
 	}
 
 	ical = Ical{goics.NewComponent()}
+	ical.init()
 
 	for i := range schedules {
 		ical.event(schedules[i])

@@ -7,8 +7,6 @@ import (
 
 	"reflect"
 
-	"fmt"
-
 	"strconv"
 
 	"github.com/PuerkitoBio/goquery"
@@ -95,7 +93,6 @@ func getSchedule(j Jwc) (data []Schedule, err error) {
 			data = append(data, *schedule)
 		}
 	})
-	fmt.Println(data)
 	return data, nil
 }
 
