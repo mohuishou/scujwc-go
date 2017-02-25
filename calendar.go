@@ -7,8 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	"os"
-
 	"github.com/jordic/goics"
 )
 
@@ -27,7 +25,7 @@ type Ical struct {
 
 //EmitICal 1
 func (ical *Ical) EmitICal() goics.Componenter {
-	return ical.component
+	return ical.c
 }
 
 //init 初始化设置ical头
@@ -42,6 +40,7 @@ func (ical *Ical) init() {
 	c.AddProperty("METHOD", "PUBLISH")
 }
 
+//event 生成事件
 func (ical *Ical) event(s Schedule) {
 	weeks := strings.Split(s.AllWeek, ",")
 	startWeek, _ := strconv.Atoi(weeks[0])
@@ -88,84 +87,24 @@ func (ical *Ical) String() string {
 func (ical *Ical) writer() *bytes.Buffer {
 	w := &bytes.Buffer{}
 	enc := goics.NewICalEncode(w)
-	enc.Encode(ins)
+	enc.Encode(ical)
 	return w
 }
 
-//Canlendar 生成日历
-func (j *Jwc) Canlendar() error {
+//Calendar 生成日历
+func (j *Jwc) Calendar() (ical Ical, err error) {
 	schedules, err := j.Schedule()
 	if err != nil {
-		return err
+		return ical, err
 	}
-	// return nil
 
-	//基本信息设置
-	c := goics.NewComponent()
-	c.SetType("VCALENDAR")
-	c.AddProperty("PRODID", "-//Mohuishou//SCUPLUS//FYSCU")
-	c.AddProperty("CALSCALE", "GREGORIAN")
-	c.AddProperty("VERSION", "2.0")
-	c.AddProperty("X-WR-CALNAME", "SCUPLUS-课表")
-	c.AddProperty("X-WR-TIMEZONE", "Asia/Shanghai")
-	c.AddProperty("METHOD", "PUBLISH")
+	ical = Ical{goics.NewComponent()}
 
 	for i := range schedules {
-		e := event(schedules[i])
-		c.AddComponent(e)
+		ical.event(schedules[i])
 	}
 
-	ins := &EventTest{
-		component: c,
-	}
-
-	f, err := os.Create("ical.ics")
-	if err != nil {
-		return err
-	}
-
-	w := &bytes.Buffer{}
-	enc := goics.NewICalEncode(w)
-	enc.Encode(ins)
-
-	defer f.Close()
-	f.Write(w.Bytes())
-
-	return nil
-}
-
-func event(s Schedule) *goics.Component {
-
-	weeks := strings.Split(s.AllWeek, ",")
-	startWeek, _ := strconv.Atoi(weeks[0])
-	d, _ := strconv.Atoi(s.Day)
-	sessions := strings.Split(s.Session, ",")
-	startSession, _ := strconv.Atoi(sessions[0])
-	endSession, _ := strconv.Atoi(sessions[len(sessions)-1])
-	println(endSession)
-
-	//初始化时间
-	cn, _ := time.LoadLocation("Asia/Chongqing")
-	tm := time.Date(2017, time.February, 26, 0, 0, 0, 0, cn)
-	startDay := weekTime(startWeek, d)
-
-	//事件设置
-	e := goics.NewComponent()
-	e.SetType("VEVENT")
-	e.AddProperty("DESCRIPTION", "课程号:"+s.CourseID+"\n 课序号:"+s.LessonID+"\n 学分:"+s.Credit)
-	e.AddProperty("LOCATION", "@"+s.Campus+"-"+s.Building+"-"+s.Classroom)
-	e.AddProperty("SUMMARY", s.CourseName+"-"+s.CourseType)
-	startTime := eventTime(tm, startDay, startSession, 0)
-	e.AddProperty("DTSTART", startTime)
-	e.AddProperty("DTEND", eventTime(tm, startDay, endSession, 1))
-	e.AddProperty("RRULE", evetRule(weeks, d))
-	e.AddProperty("DTSTAMP", startTime)
-	e.AddProperty("CREATED", startTime)
-	e.AddProperty("LAST-MODIFIED", startTime+"Z")
-	e.AddProperty("SEQUENCE", "0")
-	e.AddProperty("STATUS", "CONFIRMED")
-	e.AddProperty("TRANSP", "OPAQUE")
-	return e
+	return ical, nil
 }
 
 //返回循环规则
