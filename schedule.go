@@ -129,6 +129,7 @@ func weekParse(w string) (allWeek string) {
 }
 
 func sessionParse(session string) (data string, err error) {
+	session = strings.TrimSpace(session)
 	sessions := strings.Split(session, "~")
 	if len(sessions) != 2 {
 		//todo:解析

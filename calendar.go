@@ -20,8 +20,80 @@ const (
 	WJ = 2
 )
 
-//ScheduleIcal 生成日历
-func (j *Jwc) ScheduleIcal() error {
+//Ical 课程表转日历
+type Ical struct {
+	c goics.Componenter
+}
+
+//EmitICal 1
+func (ical *Ical) EmitICal() goics.Componenter {
+	return ical.component
+}
+
+//init 初始化设置ical头
+func (ical *Ical) init() {
+	c := ical.c
+	c.SetType("VCALENDAR")
+	c.AddProperty("PRODID", "-//Mohuishou//SCUPLUS//FYSCU")
+	c.AddProperty("CALSCALE", "GREGORIAN")
+	c.AddProperty("VERSION", "2.0")
+	c.AddProperty("X-WR-CALNAME", "SCUPLUS-课表")
+	c.AddProperty("X-WR-TIMEZONE", "Asia/Shanghai")
+	c.AddProperty("METHOD", "PUBLISH")
+}
+
+func (ical *Ical) event(s Schedule) {
+	weeks := strings.Split(s.AllWeek, ",")
+	startWeek, _ := strconv.Atoi(weeks[0])
+	d, _ := strconv.Atoi(s.Day)
+	sessions := strings.Split(s.Session, ",")
+	startSession, _ := strconv.Atoi(sessions[0])
+	endSession, _ := strconv.Atoi(sessions[len(sessions)-1])
+
+	//初始化时间
+	cn, _ := time.LoadLocation("Asia/Chongqing")
+	tm := time.Date(2017, time.February, 26, 0, 0, 0, 0, cn)
+	startDay := weekTime(startWeek, d)
+
+	//事件设置
+	e := goics.NewComponent()
+	e.SetType("VEVENT")
+	e.AddProperty("DESCRIPTION", "课程号:"+s.CourseID+"\n 课序号:"+s.LessonID+"\n 学分:"+s.Credit)
+	e.AddProperty("LOCATION", "@"+s.Campus+"-"+s.Building+"-"+s.Classroom)
+	e.AddProperty("SUMMARY", s.CourseName+"-"+s.CourseType)
+	startTime := eventTime(tm, startDay, startSession, 0)
+	e.AddProperty("DTSTART", startTime)
+	e.AddProperty("DTEND", eventTime(tm, startDay, endSession, 1))
+	e.AddProperty("RRULE", evetRule(weeks, d))
+	e.AddProperty("DTSTAMP", startTime)
+	e.AddProperty("CREATED", startTime)
+	e.AddProperty("LAST-MODIFIED", startTime+"Z")
+	e.AddProperty("SEQUENCE", "0")
+	e.AddProperty("STATUS", "CONFIRMED")
+	e.AddProperty("TRANSP", "OPAQUE")
+
+	ical.c.AddComponent(e)
+}
+
+//Bytes 以[]byte返日历信息
+func (ical *Ical) Bytes() []byte {
+	return ical.writer().Bytes()
+}
+
+//String 返回字符串格式
+func (ical *Ical) String() string {
+	return ical.writer().String()
+}
+
+func (ical *Ical) writer() *bytes.Buffer {
+	w := &bytes.Buffer{}
+	enc := goics.NewICalEncode(w)
+	enc.Encode(ins)
+	return w
+}
+
+//Canlendar 生成日历
+func (j *Jwc) Canlendar() error {
 	schedules, err := j.Schedule()
 	if err != nil {
 		return err
@@ -31,29 +103,12 @@ func (j *Jwc) ScheduleIcal() error {
 	//基本信息设置
 	c := goics.NewComponent()
 	c.SetType("VCALENDAR")
-	c.AddProperty("CALSCAL", "GREGORIAN")
+	c.AddProperty("PRODID", "-//Mohuishou//SCUPLUS//FYSCU")
+	c.AddProperty("CALSCALE", "GREGORIAN")
 	c.AddProperty("VERSION", "2.0")
 	c.AddProperty("X-WR-CALNAME", "SCUPLUS-课表")
 	c.AddProperty("X-WR-TIMEZONE", "Asia/Shanghai")
-	c.AddProperty("VERSION", "2.0")
-	c.AddProperty("VERSION", "2.0")
-	c.AddProperty("VERSION", "2.0")
-	c.AddProperty("PRODID", "-//Mohuishou//SCUPLUS//FYSCU")
-
-	vtime := goics.NewComponent()
-	vtime.SetType("VTIMEZONE")
-	vtime.AddProperty("TZID", "Asia/Shanghai")
-	vtime.AddProperty("X-LIC-LOCATION", "Asia/Shanghai")
-
-	standard := goics.NewComponent()
-	standard.SetType("STANDARD")
-	standard.AddProperty("TZOFFSETFROM", "+0800")
-	standard.AddProperty("TZOFFSETTO", "+0800")
-	standard.AddProperty("TZNAME", "CST")
-	standard.AddProperty("DTSTART", "19700101T000000")
-
-	vtime.AddComponent(standard)
-	c.AddComponent(vtime)
+	c.AddProperty("METHOD", "PUBLISH")
 
 	for i := range schedules {
 		e := event(schedules[i])
@@ -87,26 +142,22 @@ func event(s Schedule) *goics.Component {
 	sessions := strings.Split(s.Session, ",")
 	startSession, _ := strconv.Atoi(sessions[0])
 	endSession, _ := strconv.Atoi(sessions[len(sessions)-1])
+	println(endSession)
 
 	//初始化时间
 	cn, _ := time.LoadLocation("Asia/Chongqing")
 	tm := time.Date(2017, time.February, 26, 0, 0, 0, 0, cn)
 	startDay := weekTime(startWeek, d)
 
-	teacher := ""
-	for i := range s.Teachers {
-		teacher = teacher + s.Teachers[i]
-	}
-
 	//事件设置
 	e := goics.NewComponent()
 	e.SetType("VEVENT")
-	e.AddProperty("DESCRIPTION", "课程号:"+s.CourseID+"\n 课序号:"+s.LessonID+"\n 学分:"+s.Credit+"\n 老师:"+teacher)
-	e.AddProperty("LOCATION", s.Campus+"-"+s.Building+"-"+s.Classroom)
+	e.AddProperty("DESCRIPTION", "课程号:"+s.CourseID+"\n 课序号:"+s.LessonID+"\n 学分:"+s.Credit)
+	e.AddProperty("LOCATION", "@"+s.Campus+"-"+s.Building+"-"+s.Classroom)
 	e.AddProperty("SUMMARY", s.CourseName+"-"+s.CourseType)
-	startTime := eventTime(tm, startDay, startSession)
+	startTime := eventTime(tm, startDay, startSession, 0)
 	e.AddProperty("DTSTART", startTime)
-	e.AddProperty("DTEND", eventTime(tm, startDay, endSession))
+	e.AddProperty("DTEND", eventTime(tm, startDay, endSession, 1))
 	e.AddProperty("RRULE", evetRule(weeks, d))
 	e.AddProperty("DTSTAMP", startTime)
 	e.AddProperty("CREATED", startTime)
@@ -140,10 +191,13 @@ func evetRule(weeks []string, day int) (rule string) {
 	return rule
 }
 
-func eventTime(t time.Time, day, session int) string {
+func eventTime(t time.Time, day, session, isEnd int) string {
 	t = t.AddDate(0, 0, day)
 	startClass := classTime(session, WJ)
 	startTime := t.Add(time.Duration(startClass[0])*time.Hour + time.Duration(startClass[1])*time.Minute)
+	if isEnd == 1 {
+		startTime = startTime.Add(time.Duration(45) * time.Minute)
+	}
 	return startTime.Format("20060102T150405")
 }
 
@@ -213,12 +267,4 @@ func classTime(session int, campus int) (data [2]int) {
 	}
 
 	return data
-}
-
-type EventTest struct {
-	component goics.Componenter
-}
-
-func (evt *EventTest) EmitICal() goics.Componenter {
-	return evt.component
 }
