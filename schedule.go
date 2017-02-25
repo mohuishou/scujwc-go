@@ -3,6 +3,7 @@ package scujwc
 import (
 	"bytes"
 	"errors"
+	"regexp"
 	"strings"
 
 	"reflect"
@@ -87,6 +88,10 @@ func getSchedule(j Jwc) (data []Schedule, err error) {
 			case "AllWeek":
 				allWeek := weekParse(s.Text())
 				schedule.AllWeek = allWeek
+
+			case "Session":
+				session, _ := sessionParse(s.Text())
+				schedule.Session = session
 			default:
 				elem.Field(k).SetString(strings.TrimSpace(s.Text()))
 			}
@@ -159,23 +164,32 @@ func teacherParse(t string) (teachers []string) {
 
 //上课时间解析
 func weekParse(w string) (allWeek string) {
-	w = strings.TrimSpace(w)
-	allWeek, err := dayParse(w)
-	if err == nil {
-		return allWeek
+	re, _ := regexp.Compile(`[1-9]\d*|单|双`)
+	s := re.FindAllStringSubmatch(w, -1)
+	if len(s) == 1 {
+		if s[0][0] == "单" {
+			return "1,3,5,7,9,11,13,15,17"
+		} else if s[0][0] == "双" {
+			return "2,4,6,8,10,12,14,16,18"
+		}
+	} else if len(s) == 2 {
+		start, _ := strconv.Atoi(s[0][0])
+		end, _ := strconv.Atoi(s[1][0])
+		for i := start; i < end; i++ {
+			is := strconv.Itoa(i)
+			allWeek = allWeek + is + ","
+		}
+		allWeek = allWeek + s[1][0]
 	}
-
-	return "123"
+	return allWeek
 }
 
 func sessionParse(session string) (data string, err error) {
 	sessions := strings.Split(session, "~")
-	fmt.Println(sessions)
 	if len(sessions) != 2 {
 		//todo:解析
 		return "", errors.New("错误")
 	}
-	fmt.Println(sessions)
 	start, _ := strconv.Atoi(sessions[0])
 	end, _ := strconv.Atoi(sessions[1])
 	for i := start; i < end; i++ {
