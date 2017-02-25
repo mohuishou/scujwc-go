@@ -31,7 +31,7 @@ func (j *Jwc) Init(uid int, password string) error {
 	j.password = password
 	j.uid = uid
 	j.initHTTP()
-	err := j.Login()
+	err := j.login()
 	if err != nil {
 		return err
 	}
@@ -45,13 +45,16 @@ func (j *Jwc) initHTTP() {
 	j.client.Jar = jar
 }
 
-//Login 登录教务处
-func (j *Jwc) Login() (err error) {
+//login 登录教务处
+func (j *Jwc) login() (err error) {
 
 	url := DOMAIN + "/loginAction.do"
 	param := "zjh=" + strconv.Itoa(j.uid) + "&mm=" + j.password
 
 	doc, err := j.post(url, param)
+	if err != nil {
+		return err
+	}
 	errinfo := doc.Find("font[color=\"#990000\"]").Text()
 	if errinfo != "" {
 		j.isLogin = 0
@@ -85,23 +88,39 @@ func (j *Jwc) jPost(url, param string) (*goquery.Document, error) {
 
 //post 发出post请求
 func (j *Jwc) post(url, param string) (*goquery.Document, error) {
-	//todo: 设置超时时间
+
+	//初始化请求
 	req, err := http.NewRequest("POST", url, strings.NewReader(param))
 	if err != nil {
 		return nil, err
 	}
+
+	//设置请求头
 	req = setHeader(req)
+
+	//设置超时时间为10s
+	j.client.Timeout = time.Duration(10) * time.Second
+
+	//发送请求
 	resp, err := j.client.Do(req)
 	if err != nil {
 		return nil, err
 	}
-	cd, err := iconv.Open("utf-8", "gbk") // convert gbk to utf8
 
-	utfBody := iconv.NewReader(cd, resp.Body, 0)
+	//检测教务处访问是否正确
+	if resp.StatusCode != 200 {
+		return nil, errors.New("教务处访问错误：" + resp.Status)
+	}
 
+	//退出前关闭body
+	defer resp.Body.Close()
+
+	//编码转换
+	cd, err := iconv.Open("utf-8", "gbk")
 	if err != nil {
 		return nil, err
 	}
+	utfBody := iconv.NewReader(cd, resp.Body, 0)
 
 	// use utfBody using goquery
 	doc, err := goquery.NewDocumentFromReader(utfBody)

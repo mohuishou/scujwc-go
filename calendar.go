@@ -1,0 +1,224 @@
+package scujwc
+
+import (
+	"bytes"
+	"time"
+
+	"strconv"
+	"strings"
+
+	"os"
+
+	"github.com/jordic/goics"
+)
+
+//校区
+const (
+	//JA 江安校区
+	JA = 1
+	//WJ 望江校区
+	WJ = 2
+)
+
+//ScheduleIcal 生成日历
+func (j *Jwc) ScheduleIcal() error {
+	schedules, err := j.Schedule()
+	if err != nil {
+		return err
+	}
+	// return nil
+
+	//基本信息设置
+	c := goics.NewComponent()
+	c.SetType("VCALENDAR")
+	c.AddProperty("CALSCAL", "GREGORIAN")
+	c.AddProperty("VERSION", "2.0")
+	c.AddProperty("X-WR-CALNAME", "SCUPLUS-课表")
+	c.AddProperty("X-WR-TIMEZONE", "Asia/Shanghai")
+	c.AddProperty("VERSION", "2.0")
+	c.AddProperty("VERSION", "2.0")
+	c.AddProperty("VERSION", "2.0")
+	c.AddProperty("PRODID", "-//Mohuishou//SCUPLUS//FYSCU")
+
+	vtime := goics.NewComponent()
+	vtime.SetType("VTIMEZONE")
+	vtime.AddProperty("TZID", "Asia/Shanghai")
+	vtime.AddProperty("X-LIC-LOCATION", "Asia/Shanghai")
+
+	standard := goics.NewComponent()
+	standard.SetType("STANDARD")
+	standard.AddProperty("TZOFFSETFROM", "+0800")
+	standard.AddProperty("TZOFFSETTO", "+0800")
+	standard.AddProperty("TZNAME", "CST")
+	standard.AddProperty("DTSTART", "19700101T000000")
+
+	vtime.AddComponent(standard)
+	c.AddComponent(vtime)
+
+	for i := range schedules {
+		e := event(schedules[i])
+		c.AddComponent(e)
+	}
+
+	ins := &EventTest{
+		component: c,
+	}
+
+	f, err := os.Create("ical.ics")
+	if err != nil {
+		return err
+	}
+
+	w := &bytes.Buffer{}
+	enc := goics.NewICalEncode(w)
+	enc.Encode(ins)
+
+	defer f.Close()
+	f.Write(w.Bytes())
+
+	return nil
+}
+
+func event(s Schedule) *goics.Component {
+
+	weeks := strings.Split(s.AllWeek, ",")
+	startWeek, _ := strconv.Atoi(weeks[0])
+	d, _ := strconv.Atoi(s.Day)
+	sessions := strings.Split(s.Session, ",")
+	startSession, _ := strconv.Atoi(sessions[0])
+	endSession, _ := strconv.Atoi(sessions[len(sessions)-1])
+
+	//初始化时间
+	cn, _ := time.LoadLocation("Asia/Chongqing")
+	tm := time.Date(2017, time.February, 26, 0, 0, 0, 0, cn)
+	startDay := weekTime(startWeek, d)
+
+	teacher := ""
+	for i := range s.Teachers {
+		teacher = teacher + s.Teachers[i]
+	}
+
+	//事件设置
+	e := goics.NewComponent()
+	e.SetType("VEVENT")
+	e.AddProperty("DESCRIPTION", "课程号:"+s.CourseID+"\n 课序号:"+s.LessonID+"\n 学分:"+s.Credit+"\n 老师:"+teacher)
+	e.AddProperty("LOCATION", s.Campus+"-"+s.Building+"-"+s.Classroom)
+	e.AddProperty("SUMMARY", s.CourseName+"-"+s.CourseType)
+	startTime := eventTime(tm, startDay, startSession)
+	e.AddProperty("DTSTART", startTime)
+	e.AddProperty("DTEND", eventTime(tm, startDay, endSession))
+	e.AddProperty("RRULE", evetRule(weeks, d))
+	e.AddProperty("DTSTAMP", startTime)
+	e.AddProperty("CREATED", startTime)
+	e.AddProperty("LAST-MODIFIED", startTime+"Z")
+	e.AddProperty("SEQUENCE", "0")
+	e.AddProperty("STATUS", "CONFIRMED")
+	e.AddProperty("TRANSP", "OPAQUE")
+	return e
+}
+
+//返回循环规则
+func evetRule(weeks []string, day int) (rule string) {
+
+	rule = "FREQ=WEEKLY;COUNT=" + strconv.Itoa(len(weeks))
+	//间隔的周次
+	interval := 1
+	if len(weeks) > 1 {
+		a1, _ := strconv.Atoi(weeks[1])
+		a0, _ := strconv.Atoi(weeks[0])
+		interval = a1 - a0
+	}
+	rule = rule + ";INTERVAL=" + strconv.Itoa(interval)
+
+	if day < 1 || day > 7 {
+		return rule
+	}
+
+	//上课的时间，周几
+	byDays := [7]string{"MO", "TU", "WE", "TH", "FR", "SA", "SU"}
+	rule = rule + ";BYDAY=" + byDays[day-1]
+	return rule
+}
+
+func eventTime(t time.Time, day, session int) string {
+	t = t.AddDate(0, 0, day)
+	startClass := classTime(session, WJ)
+	startTime := t.Add(time.Duration(startClass[0])*time.Hour + time.Duration(startClass[1])*time.Minute)
+	return startTime.Format("20060102T150405")
+}
+
+//weekTime 根据周次以及上课的星期几返回添加的时间，返回需要增加的天数
+//当输入错误时返回-1
+func weekTime(week int, day int) (days int) {
+	if week < 1 || day < 1 || day > 7 {
+		return -1
+	}
+	days = day + (week-1)*7
+
+	if day == 7 {
+		days = (week - 1) * 7
+	}
+	return days
+}
+
+//classTime 返回所在校区的上下课时间，返回上课时间的时，分
+func classTime(session int, campus int) (data [2]int) {
+
+	if (session < 1 || session > 12) || (campus < 1 || campus > 2) {
+		return data
+	}
+
+	//江安校区时刻表
+	//只包含上课时间
+	//上课时间 "0815","0910","1015","1110","1350","1445","1550","1645","1740","1920","2015","2110"
+	//下课时间 "0900","0955","1100","1155","1435","1530","1635","1730","1825","2005","2100","2155"
+	//下课时间=上课时间+45min
+	classTimeJA := [12][2]int{
+		[2]int{8, 15},
+		[2]int{9, 10},
+		[2]int{10, 15},
+		[2]int{11, 10},
+		[2]int{13, 50},
+		[2]int{14, 45},
+		[2]int{15, 50},
+		[2]int{16, 45},
+		[2]int{17, 40},
+		[2]int{19, 20},
+		[2]int{20, 15},
+		[2]int{21, 10},
+	}
+
+	//望江校区时刻表
+	//上课时间 "0800","0855","1000","1055","1400","1455","1550","1655","1750","1930","2025","2120"
+	//下课时间 "0845","0940","1045","1140","1445","1540","1635","1740","1835","2015","2110","2205"
+	classTimeWJ := [12][2]int{
+		[2]int{8, 00},
+		[2]int{8, 55},
+		[2]int{10, 00},
+		[2]int{10, 55},
+		[2]int{14, 00},
+		[2]int{14, 55},
+		[2]int{15, 50},
+		[2]int{16, 55},
+		[2]int{17, 50},
+		[2]int{19, 30},
+		[2]int{20, 25},
+		[2]int{21, 20},
+	}
+
+	if campus == JA {
+		data = classTimeJA[session-1]
+	} else if campus == WJ {
+		data = classTimeWJ[session-1]
+	}
+
+	return data
+}
+
+type EventTest struct {
+	component goics.Componenter
+}
+
+func (evt *EventTest) EmitICal() goics.Componenter {
+	return evt.component
+}
