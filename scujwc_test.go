@@ -2,10 +2,6 @@ package scujwc
 
 import "testing"
 
-var (
-	j Jwc
-)
-
 // 测试初始化
 func Test_0(t *testing.T) {
 	// err := j.Init(2014141453066, "lailin123")

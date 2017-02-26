@@ -1,11 +1,10 @@
 package scujwc
 
 import (
-	"errors"
-	"github.com/PuerkitoBio/goquery"
 	"strings"
-)
 
+	"github.com/PuerkitoBio/goquery"
+)
 
 //Grades 成绩
 type Grades struct {
@@ -21,16 +20,10 @@ type Grades struct {
 
 //GPA 获取本学期成绩
 func (j *Jwc) GPA() ([]Grades, error) {
-	//登录检测
-	if j.isLogin == 0 {
-		err := errors.New("尚未登录，请先登录！")
-		return nil, err
-	}
-	defer j.Logout()
 
 	//获取goquery.Document 对象，以便解析需要的数据
 	url := DOMAIN + "/bxqcjcxAction.do"
-	doc, err := j.post(url, "")
+	doc, err := j.jPost(url, "")
 	if err != nil {
 		return nil, err
 	}
@@ -61,16 +54,10 @@ func (j *Jwc) GPA() ([]Grades, error) {
 
 //GPAAll 获取所有成绩
 func (j *Jwc) GPAAll() ([][]Grades, error) {
-	//登录检测
-	if j.isLogin == 0 {
-		err := errors.New("尚未登录，请先登录！")
-		return nil, err
-	}
-	defer j.Logout()
 
 	//获取goquery.Document 对象，以便解析需要的数据
 	url := DOMAIN + "/gradeLnAllAction.do"
-	doc, err := j.post(url, "type=ln&oper=qbinfo&lnxndm")
+	doc, err := j.jPost(url, "type=ln&oper=qbinfo&lnxndm")
 	if err != nil {
 		return nil, err
 	}
@@ -111,15 +98,9 @@ func (j *Jwc) GPAAll() ([][]Grades, error) {
 
 //GPANotPass 不及格成绩
 func (j *Jwc) GPANotPass() ([][]Grades, error) {
-	//登录检测
-	if j.isLogin == 0 {
-		err := errors.New("尚未登录，请先登录！")
-		return nil, err
-	}
-	defer j.Logout()
 
 	url := DOMAIN + "/gradeLnAllAction.do"
-	doc, err := j.post(url, "type=ln&oper=bjg")
+	doc, err := j.jPost(url, "type=ln&oper=bjg")
 	if err != nil {
 		return nil, err
 	}

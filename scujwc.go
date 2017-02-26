@@ -33,16 +33,16 @@ type Jwc struct {
 	isLogin  int //登录判断 1：已登录，0：尚未登录
 }
 
-//Init 初始化学号和密码
-func (j *Jwc) Init(uid int, password string) error {
+//NewJwc 新建并初始化一个教务处对象
+func NewJwc(uid int, password string) (j Jwc, err error) {
 	j.password = password
 	j.uid = uid
 	j.initHTTP()
-	err := j.login()
+	err = j.login()
 	if err != nil {
-		return err
+		return j, err
 	}
-	return nil
+	return j, nil
 }
 
 //initHTTP 初始化请求客户端
@@ -75,7 +75,7 @@ func (j *Jwc) login() (err error) {
 
 //Logout 退出登录
 func (j *Jwc) Logout() (err error) {
-	url := DOMAIN + "logout.do"
+	url := DOMAIN + "/logout.do"
 	_, err = j.post(url, "loginType=platformLogin")
 	j.isLogin = 0
 	return err
@@ -88,7 +88,10 @@ func (j *Jwc) jPost(url, param string) (*goquery.Document, error) {
 		return nil, err
 	}
 
-	defer j.Logout()
+	//退出登录
+	defer func() {
+		go j.Logout()
+	}()
 
 	return j.post(url, param)
 }
@@ -123,11 +126,6 @@ func (j *Jwc) post(url, param string) (*goquery.Document, error) {
 	defer resp.Body.Close()
 
 	//编码转换
-	// cd, err := iconv.Open("utf-8", "gbk")
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// utfBody := iconv.NewReader(cd, resp.Body, 0)
 	utfBody, err := GbkToUtf8(resp.Body)
 	if err != nil {
 		return nil, err
