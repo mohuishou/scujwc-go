@@ -20,7 +20,10 @@ const (
 
 //Ical 课程表转日历
 type Ical struct {
-	c goics.Componenter
+	c      goics.Componenter
+	campus int
+	weeks  []string
+	day    int
 }
 
 //EmitICal 1
@@ -40,11 +43,28 @@ func (ical *Ical) init() {
 	c.AddProperty("METHOD", "PUBLISH")
 }
 
+func (ical *Ical) getWeeks(s Schedule) {
+	ical.weeks = strings.Split(s.AllWeek, ",")
+}
+
+func (ical *Ical) getDay(s Schedule) {
+	ical.day, _ = strconv.Atoi(s.Day)
+}
+
+//Campus 设置学校
+func (ical *Ical) Campus(campus int) bool {
+	if campus < 1 || campus > 2 {
+		return false
+	}
+	ical.campus = campus
+	return true
+}
+
 //event 生成事件
 func (ical *Ical) event(s Schedule) {
-	weeks := strings.Split(s.AllWeek, ",")
-	startWeek, _ := strconv.Atoi(weeks[0])
-	d, _ := strconv.Atoi(s.Day)
+	ical.getWeeks(s)
+	ical.getDay(s)
+	startWeek, _ := strconv.Atoi(ical.weeks[0])
 	sessions := strings.Split(s.Session, ",")
 	startSession, _ := strconv.Atoi(sessions[0])
 	endSession, _ := strconv.Atoi(sessions[len(sessions)-1])
@@ -52,7 +72,7 @@ func (ical *Ical) event(s Schedule) {
 	//初始化时间
 	cn, _ := time.LoadLocation("Asia/Chongqing")
 	tm := time.Date(2017, time.February, 26, 0, 0, 0, 0, cn)
-	startDay := weekTime(startWeek, d)
+	startDay := weekTime(startWeek, ical.day)
 
 	//事件设置
 	e := goics.NewComponent()
@@ -60,10 +80,10 @@ func (ical *Ical) event(s Schedule) {
 	e.AddProperty("DESCRIPTION", "课程号:"+s.CourseID+"\n 课序号:"+s.LessonID+"\n 学分:"+s.Credit)
 	e.AddProperty("LOCATION", "@"+s.Campus+"-"+s.Building+"-"+s.Classroom)
 	e.AddProperty("SUMMARY", s.CourseName+"-"+s.CourseType)
-	startTime := eventTime(tm, startDay, startSession, 0)
+	startTime := ical.eventTime(tm, startSession, startDay, 0)
 	e.AddProperty("DTSTART", startTime)
-	e.AddProperty("DTEND", eventTime(tm, startDay, endSession, 1))
-	e.AddProperty("RRULE", evetRule(weeks, d))
+	e.AddProperty("DTEND", ical.eventTime(tm, endSession, startDay, 1))
+	e.AddProperty("RRULE", ical.evetRule())
 	e.AddProperty("DTSTAMP", startTime)
 	e.AddProperty("CREATED", startTime)
 	e.AddProperty("LAST-MODIFIED", startTime+"Z")
@@ -92,13 +112,13 @@ func (ical *Ical) writer() *bytes.Buffer {
 }
 
 //Calendar 生成日历
-func (j *Jwc) Calendar() (ical Ical, err error) {
+func (j *Jwc) Calendar(campus int) (ical Ical, err error) {
 	schedules, err := j.Schedule()
 	if err != nil {
 		return ical, err
 	}
 
-	ical = Ical{goics.NewComponent()}
+	ical = Ical{c: goics.NewComponent(), campus: campus}
 	ical.init()
 
 	for i := range schedules {
@@ -109,31 +129,31 @@ func (j *Jwc) Calendar() (ical Ical, err error) {
 }
 
 //返回循环规则
-func evetRule(weeks []string, day int) (rule string) {
+func (ical Ical) evetRule() (rule string) {
 
-	rule = "FREQ=WEEKLY;COUNT=" + strconv.Itoa(len(weeks))
+	rule = "FREQ=WEEKLY;COUNT=" + strconv.Itoa(len(ical.weeks))
 	//间隔的周次
 	interval := 1
-	if len(weeks) > 1 {
-		a1, _ := strconv.Atoi(weeks[1])
-		a0, _ := strconv.Atoi(weeks[0])
+	if len(ical.weeks) > 1 {
+		a1, _ := strconv.Atoi(ical.weeks[1])
+		a0, _ := strconv.Atoi(ical.weeks[0])
 		interval = a1 - a0
 	}
 	rule = rule + ";INTERVAL=" + strconv.Itoa(interval)
 
-	if day < 1 || day > 7 {
+	if ical.day < 1 || ical.day > 7 {
 		return rule
 	}
 
 	//上课的时间，周几
 	byDays := [7]string{"MO", "TU", "WE", "TH", "FR", "SA", "SU"}
-	rule = rule + ";BYDAY=" + byDays[day-1]
+	rule = rule + ";BYDAY=" + byDays[ical.day-1]
 	return rule
 }
 
-func eventTime(t time.Time, day, session, isEnd int) string {
+func (ical Ical) eventTime(t time.Time, session, day, isEnd int) string {
 	t = t.AddDate(0, 0, day)
-	startClass := classTime(session, WJ)
+	startClass := ical.classTime(session)
 	startTime := t.Add(time.Duration(startClass[0])*time.Hour + time.Duration(startClass[1])*time.Minute)
 	if isEnd == 1 {
 		startTime = startTime.Add(time.Duration(45) * time.Minute)
@@ -156,9 +176,9 @@ func weekTime(week int, day int) (days int) {
 }
 
 //classTime 返回所在校区的上下课时间，返回上课时间的时，分
-func classTime(session int, campus int) (data [2]int) {
+func (ical Ical) classTime(session int) (data [2]int) {
 
-	if (session < 1 || session > 12) || (campus < 1 || campus > 2) {
+	if (session < 1 || session > 12) || (ical.campus < 1 || ical.campus > 2) {
 		return data
 	}
 
@@ -200,9 +220,9 @@ func classTime(session int, campus int) (data [2]int) {
 		[2]int{21, 20},
 	}
 
-	if campus == JA {
+	if ical.campus == JA {
 		data = classTimeJA[session-1]
-	} else if campus == WJ {
+	} else if ical.campus == WJ {
 		data = classTimeWJ[session-1]
 	}
 
