@@ -74,10 +74,16 @@ func (ical *Ical) event(s Schedule) {
 	tm := time.Date(2017, time.February, 26, 0, 0, 0, 0, cn)
 	startDay := weekTime(startWeek, ical.day)
 
+	//teachers
+	teachers := ""
+	for i := range s.Teachers {
+		teachers = teachers + s.Teachers[i] + " "
+	}
+
 	//事件设置
 	e := goics.NewComponent()
 	e.SetType("VEVENT")
-	e.AddProperty("DESCRIPTION", "课程号:"+s.CourseID+"\n 课序号:"+s.LessonID+"\n 学分:"+s.Credit)
+	e.AddProperty("DESCRIPTION", "课程号:"+s.CourseID+"  课序号:"+s.LessonID+"  学分:"+s.Credit+" 教师："+teachers)
 	e.AddProperty("LOCATION", "@"+s.Campus+"-"+s.Building+"-"+s.Classroom)
 	e.AddProperty("SUMMARY", s.CourseName+"-"+s.CourseType)
 	startTime := ical.eventTime(tm, startSession, startDay, 0)

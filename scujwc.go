@@ -2,6 +2,7 @@ package scujwc
 
 import (
 	"errors"
+	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"net/http/cookiejar"
@@ -9,8 +10,14 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/text/encoding/simplifiedchinese"
+	"golang.org/x/text/transform"
+
+	"io"
+
+	"bytes"
+
 	"github.com/PuerkitoBio/goquery"
-	iconv "github.com/qiniu/iconv"
 )
 
 const (
@@ -116,11 +123,15 @@ func (j *Jwc) post(url, param string) (*goquery.Document, error) {
 	defer resp.Body.Close()
 
 	//编码转换
-	cd, err := iconv.Open("utf-8", "gbk")
+	// cd, err := iconv.Open("utf-8", "gbk")
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// utfBody := iconv.NewReader(cd, resp.Body, 0)
+	utfBody, err := GbkToUtf8(resp.Body)
 	if err != nil {
 		return nil, err
 	}
-	utfBody := iconv.NewReader(cd, resp.Body, 0)
 
 	// use utfBody using goquery
 	doc, err := goquery.NewDocumentFromReader(utfBody)
@@ -151,4 +162,15 @@ func randIP() (ip string) {
 		}
 	}
 	return ip
+}
+
+//GbkToUtf8 编码转换
+func GbkToUtf8(body io.Reader) (io.Reader, error) {
+	reader := transform.NewReader(body, simplifiedchinese.GBK.NewDecoder())
+	d, e := ioutil.ReadAll(reader)
+	if e != nil {
+		return nil, e
+	}
+	utfBody := bytes.NewReader(d)
+	return utfBody, nil
 }
