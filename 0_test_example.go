@@ -1,15 +1,22 @@
 package scujwc
 
-//测试初始化
-//测试钱请先将该文件重命名为0_test.go
+// import (
+// 	"log"
+// )
 
-var j Jwc
+// //测试初始化
+// //测试钱请先将该文件重命名为0_test.go
 
-const (
-	uid      = 123   //在这里填写你的学号
-	password = "123" //在这里填写教务处密码
-)
+// var j Jwc
 
-func init() {
-	j = NewJwc(uid, password)
-}
+// const (
+// 	uid      = 123   //在这里填写你的学号
+// 	password = "123" //在这里填写教务处密码
+// )
+
+// func init() {
+// 	j, err := NewJwc(uid, password)
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// }
