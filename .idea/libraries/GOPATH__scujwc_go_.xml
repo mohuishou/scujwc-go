@@ -1,0 +1,19 @@
+<component name="libraryTable">
+  <library name="GOPATH &lt;scujwc-go&gt;">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/../.." />
+      <root url="file://$PROJECT_DIR$/../../../../../GOPATH/src/golang.org" />
+      <root url="file://$PROJECT_DIR$/../../../../../GOPATH/src/github.com" />
+      <root url="file://$PROJECT_DIR$/../../../../../GOPATH/src/sourcegraph.com" />
+    </CLASSES>
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/../.." />
+      <root url="file://$PROJECT_DIR$/../../../../../GOPATH/src/golang.org" />
+      <root url="file://$PROJECT_DIR$/../../../../../GOPATH/src/github.com" />
+      <root url="file://$PROJECT_DIR$/../../../../../GOPATH/src/sourcegraph.com" />
+    </SOURCES>
+    <excluded>
+      <root url="file://$PROJECT_DIR$" />
+    </excluded>
+  </library>
+</component>
