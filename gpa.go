@@ -5,8 +5,6 @@ import (
 
 	"reflect"
 
-	"fmt"
-
 	"github.com/PuerkitoBio/goquery"
 )
 
@@ -20,40 +18,6 @@ type Grades struct {
 	Grade      string `json:"grade"`
 	Term       int    `json:"term"`
 	TermName   string `json:"term_name"`
-}
-
-//GPA 获取本学期成绩
-func (j *Jwc) GPA() ([]Grades, error) {
-
-	//获取goquery.Document 对象，以便解析需要的数据
-	url := DOMAIN + "/bxqcjcxAction.do"
-	doc, err := j.jPost(url, "")
-	if err != nil {
-		return nil, err
-	}
-	g := Grades{Term: 1}
-	grade := g.get(j, doc.Selection)
-
-	// //抓取数据
-	// grade := make([]Grades, 0)
-	// g := &Grades{Term: 1}
-	// v := reflect.ValueOf(g)
-	// elem := v.Elem()
-	// eq := []int{0, 1, 2, 4, 5, 6}
-	// doc.Find("#user tr").Each(func(i int, s *goquery.Selection) {
-	// 	if i == 0 {
-	// 		return
-	// 	}
-	// 	for k := 0; k < elem.NumField(); k++ {
-	// 		if k == len(eq) {
-	// 			break
-	// 		}
-	// 		elem.Field(k).SetString(strings.TrimSpace(s.Find("td").Eq(eq[k]).Text()))
-	// 	}
-	// 	grade = append(grade, *g)
-	// })
-	fmt.Println(grade)
-	return grade, nil
 }
 
 func (g Grades) get(j *Jwc, doc *goquery.Selection) []Grades {
@@ -78,9 +42,19 @@ func (g Grades) get(j *Jwc, doc *goquery.Selection) []Grades {
 	return grade
 }
 
-//GPAAll 获取所有成绩
-func (j *Jwc) GPAAll() ([][]Grades, error) {
+func (g Grades) getGPA(j *Jwc) ([]Grades, error) {
+	//获取goquery.Document 对象，以便解析需要的数据
+	url := DOMAIN + "/bxqcjcxAction.do"
+	doc, err := j.jPost(url, "")
+	if err != nil {
+		return nil, err
+	}
+	g.Term = 1
+	grade := g.get(j, doc.Selection)
+	return grade, nil
+}
 
+func (g Grades) getGPAAll(j *Jwc) ([][]Grades, error) {
 	//获取goquery.Document 对象，以便解析需要的数据
 	url := DOMAIN + "/gradeLnAllAction.do"
 	doc, err := j.jPost(url, "type=ln&oper=qbinfo&lnxndm")
@@ -97,28 +71,39 @@ func (j *Jwc) GPAAll() ([][]Grades, error) {
 	grades := make([][]Grades, 0)
 	doc.Find("table.displayTag").Each(func(i int, sel *goquery.Selection) {
 		//获取每学期成绩
-		// grade := make([]Grades, 10)
-		g := Grades{Term: i, TermName: terms[i]}
+		g = Grades{Term: i, TermName: terms[i]}
 		grade := g.get(j, sel)
 		grades = append(grades, grade)
 	})
-	fmt.Println(grades)
 	return grades, nil
 }
 
-//GPANotPass 不及格成绩
-func (j *Jwc) GPANotPass() ([][]Grades, error) {
+func (g Grades) getGPANotPass(j *Jwc) ([][]Grades, error) {
 	url := DOMAIN + "/gradeLnAllAction.do"
 	doc, err := j.jPost(url, "type=ln&oper=bjg")
 	if err != nil {
 		return nil, err
 	}
 	grades := make([][]Grades, 0)
+	g.Term = 0
 	doc.Find(".displayTag").Each(func(i int, sel *goquery.Selection) {
-		g := Grades{Term: 0}
 		grade := g.get(j, sel)
 		grades = append(grades, grade)
 	})
-	fmt.Println(grades)
 	return grades, nil
+}
+
+//GPA 获取本学期成绩
+func (j *Jwc) GPA() ([]Grades, error) {
+	return Grades{}.getGPA(j)
+}
+
+//GPAAll 获取所有成绩
+func (j *Jwc) GPAAll() ([][]Grades, error) {
+	return Grades{}.getGPAAll(j)
+}
+
+//GPANotPass 不及格成绩
+func (j *Jwc) GPANotPass() ([][]Grades, error) {
+	return Grades{}.getGPANotPass(j)
 }
