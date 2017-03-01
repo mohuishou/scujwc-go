@@ -3,6 +3,10 @@ package scujwc
 import (
 	"strings"
 
+	"reflect"
+
+	"fmt"
+
 	"github.com/PuerkitoBio/goquery"
 )
 
@@ -27,29 +31,51 @@ func (j *Jwc) GPA() ([]Grades, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	//抓取数据
-	grade := make([]Grades, 10)
 	g := Grades{Term: 1}
-	count := 0
+	grade := g.get(j, doc.Selection)
+
+	// //抓取数据
+	// grade := make([]Grades, 0)
+	// g := &Grades{Term: 1}
+	// v := reflect.ValueOf(g)
+	// elem := v.Elem()
+	// eq := []int{0, 1, 2, 4, 5, 6}
+	// doc.Find("#user tr").Each(func(i int, s *goquery.Selection) {
+	// 	if i == 0 {
+	// 		return
+	// 	}
+	// 	for k := 0; k < elem.NumField(); k++ {
+	// 		if k == len(eq) {
+	// 			break
+	// 		}
+	// 		elem.Field(k).SetString(strings.TrimSpace(s.Find("td").Eq(eq[k]).Text()))
+	// 	}
+	// 	grade = append(grade, *g)
+	// })
+	fmt.Println(grade)
+	return grade, nil
+}
+
+func (g Grades) get(j *Jwc, doc *goquery.Selection) []Grades {
+	//抓取数据
+	grade := make([]Grades, 0)
+	// g := &Grades{Term: 1}
+	v := reflect.ValueOf(&g)
+	elem := v.Elem()
+	eq := []int{0, 1, 2, 4, 5, 6}
 	doc.Find("#user tr").Each(func(i int, s *goquery.Selection) {
-		g.CourseID = strings.TrimSpace(s.Find("td").Eq(0).Text())
-		if len(g.CourseID) == 0 {
+		if i == 0 {
 			return
 		}
-		g.LessonID = strings.TrimSpace(s.Find("td").Eq(1).Text())
-		g.CourseName = strings.TrimSpace(s.Find("td").Eq(2).Text())
-		g.Credit = strings.TrimSpace(s.Find("td").Eq(4).Text())
-		g.CourseType = strings.TrimSpace(s.Find("td").Eq(5).Text())
-		g.Grade = strings.TrimSpace(s.Find("td").Eq(6).Text())
-		if count > 9 {
-			grade = append(grade, g)
-		} else {
-			grade[count] = g
-			count++
+		for k := 0; k < elem.NumField(); k++ {
+			if k == len(eq) {
+				break
+			}
+			elem.Field(k).SetString(strings.TrimSpace(s.Find("td").Eq(eq[k]).Text()))
 		}
+		grade = append(grade, g)
 	})
-	return grade, nil
+	return grade
 }
 
 //GPAAll 获取所有成绩
@@ -68,67 +94,31 @@ func (j *Jwc) GPAAll() ([][]Grades, error) {
 		terms[i] = s.Text()
 	})
 
-	grades := make([][]Grades, 10)
+	grades := make([][]Grades, 0)
 	doc.Find("table.displayTag").Each(func(i int, sel *goquery.Selection) {
 		//获取每学期成绩
-		grade := make([]Grades, 10)
+		// grade := make([]Grades, 10)
 		g := Grades{Term: i, TermName: terms[i]}
-		count := 0
-		sel.Find("#user tr").Each(func(i int, s *goquery.Selection) {
-			g.CourseID = strings.TrimSpace(s.Find("td").Eq(0).Text())
-			if len(g.CourseID) == 0 {
-				return
-			}
-			g.LessonID = strings.TrimSpace(s.Find("td").Eq(1).Text())
-			g.CourseName = strings.TrimSpace(s.Find("td").Eq(2).Text())
-			g.Credit = strings.TrimSpace(s.Find("td").Eq(4).Text())
-			g.CourseType = strings.TrimSpace(s.Find("td").Eq(5).Text())
-			g.Grade = strings.TrimSpace(s.Find("td").Eq(6).Text())
-			if count > 9 {
-				grade = append(grade, g)
-			} else {
-				grade[count] = g
-				count++
-			}
-		})
-		grades[i] = grade
+		grade := g.get(j, sel)
+		grades = append(grades, grade)
 	})
+	fmt.Println(grades)
 	return grades, nil
 }
 
 //GPANotPass 不及格成绩
 func (j *Jwc) GPANotPass() ([][]Grades, error) {
-
 	url := DOMAIN + "/gradeLnAllAction.do"
 	doc, err := j.jPost(url, "type=ln&oper=bjg")
 	if err != nil {
 		return nil, err
 	}
-	grades := make([][]Grades, 2)
+	grades := make([][]Grades, 0)
 	doc.Find(".displayTag").Each(func(i int, sel *goquery.Selection) {
-		//获取每学期成绩
-		grade := make([]Grades, 1)
-
 		g := Grades{Term: 0}
-		count := 0
-		sel.Find("tbody tr").Each(func(i int, s *goquery.Selection) {
-			g.CourseID = strings.TrimSpace(s.Find("td").Eq(0).Text())
-			if len(g.CourseID) == 0 {
-				return
-			}
-			g.LessonID = strings.TrimSpace(s.Find("td").Eq(1).Text())
-			g.CourseName = strings.TrimSpace(s.Find("td").Eq(2).Text())
-			g.Credit = strings.TrimSpace(s.Find("td").Eq(4).Text())
-			g.CourseType = strings.TrimSpace(s.Find("td").Eq(5).Text())
-			g.Grade = strings.TrimSpace(s.Find("td").Eq(6).Text())
-			if count > 0 {
-				grade = append(grade, g)
-			} else {
-				grade[count] = g
-				count++
-			}
-		})
-		grades[i] = grade
+		grade := g.get(j, sel)
+		grades = append(grades, grade)
 	})
+	fmt.Println(grades)
 	return grades, nil
 }
