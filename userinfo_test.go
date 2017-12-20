@@ -5,7 +5,7 @@ import (
 )
 
 func TestGet(t *testing.T) {
-	userinfo, err := jwcTest.UserInfo()
+	userinfo, err := j.UserInfo()
 	if err != nil {
 		t.Fatal(err)
 	}

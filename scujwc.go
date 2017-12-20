@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"log"
+
 	"golang.org/x/text/encoding/simplifiedchinese"
 	"golang.org/x/text/transform"
 
@@ -96,11 +98,21 @@ func (j *Jwc) jPost(url, param string) (*goquery.Document, error) {
 	return j.post(url, param)
 }
 
+//get 发出get请求
+func (j *Jwc) get(url, param string) (*goquery.Document, error) {
+	return j.request(url, param, "GET")
+}
+
 //post 发出post请求
 func (j *Jwc) post(url, param string) (*goquery.Document, error) {
+	return j.request(url, param, "POST")
+}
+
+//request 发出请求
+func (j *Jwc) request(url, param, method string) (*goquery.Document, error) {
 
 	//初始化请求
-	req, err := http.NewRequest("POST", url, strings.NewReader(param))
+	req, err := http.NewRequest(method, url, strings.NewReader(param))
 	if err != nil {
 		return nil, err
 	}
@@ -171,4 +183,14 @@ func GbkToUtf8(body io.Reader) (io.Reader, error) {
 	}
 	utfBody := bytes.NewReader(d)
 	return utfBody, nil
+}
+
+//Utf8ToGbk 编码转换
+func Utf8ToGbk(s string) string {
+	data, err := ioutil.ReadAll(transform.NewReader(bytes.NewReader([]byte(s)), simplifiedchinese.GBK.NewEncoder()))
+	if err != nil {
+		log.Println("编码转换错误:", err)
+		return ""
+	}
+	return string(data)
 }

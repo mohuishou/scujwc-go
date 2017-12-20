@@ -5,7 +5,7 @@ import (
 )
 
 func TestGPA(t *testing.T) {
-	g, err := jwcTest.GPA()
+	g, err := j.GPA()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -13,7 +13,7 @@ func TestGPA(t *testing.T) {
 }
 
 func TestGPAAll(t *testing.T) {
-	g, err := jwcTest.GPAAll()
+	g, err := j.GPAAll()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -21,7 +21,7 @@ func TestGPAAll(t *testing.T) {
 }
 
 func TestGPANotPass(t *testing.T) {
-	g, err := jwcTest.GPANotPass()
+	g, err := j.GPANotPass()
 	if err != nil {
 		t.Fatal(err)
 	}
