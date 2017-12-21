@@ -18,7 +18,7 @@ func TestJwc_getEvaList(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.j.getEvaList()
+			got, err := tt.j.GetEvaList()
 			t.Log(got)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Jwc.getEvaList() error = %v, wantErr %v", err, tt.wantErr)
