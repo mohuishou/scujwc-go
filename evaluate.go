@@ -116,13 +116,17 @@ func getStarName(doc *goquery.Document) ([]string, error) {
 	return names, nil
 }
 
-// 评教
+// Evaluate 评教
 func (j *Jwc) Evaluate(evaluate *Evaluate) error {
 	defer j.Logout()
 
+	// 检查是否已经评教
+	if evaluate.Status != 0 {
+		return errors.New("您已评价：" + evaluate.CourseName + "-" + evaluate.TeacherName)
+	}
+
 	// 第一步：获取评教w问卷页面
 	params := evaluate.getParams()
-	params.Set("oper", "wjResultShow")
 	doc, err := j.post(EvaluateURL, params.Encode())
 	if err != nil {
 		log.Println(err)
@@ -131,12 +135,15 @@ func (j *Jwc) Evaluate(evaluate *Evaluate) error {
 
 	//获取需要评教的星级
 	names, err := getStarName(doc)
-	if err != nil {
+	if err != nil || len(names) == 0 {
 		log.Println(err)
+		err = errors.New(err.Error() + "star names 获取失败")
 		return err
 	}
 
 	//构造评教参数
+	params = url.Values{}
+	log.Println("names:", names)
 	for _, name := range names {
 		star := StarToGradeTeacher[int(evaluate.Star)-1]
 		if evaluate.TeacherType == 1 {
@@ -144,15 +151,26 @@ func (j *Jwc) Evaluate(evaluate *Evaluate) error {
 		}
 		params.Set(name, "10_"+star)
 	}
-	params.Set("oper", "wjpg")
+	params.Set("wjbm", evaluate.EvaluateID)
+	params.Set("bpr", evaluate.TeacherID)
+	params.Set("pgnr", evaluate.CourseID)
 	params.Set("zgpj", Utf8ToGbk(evaluate.Comment))
 
-	j.post(EvaluateURL, params.Encode())
+	log.Println(params.Encode())
+
+	doc, err = j.post(EvaluateURL+"?oper=wjpg", params.Encode())
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	if !strings.Contains(doc.Find("script").Text(), "成功") {
+		return errors.New("评教失败！")
+	}
 
 	return nil
 }
 
-// GetEvaluate 获取评教数据
+// GetEvaList 获取评教数据
 func (j *Jwc) GetEvaList() ([]Evaluate, error) {
 	defer j.Logout()
 	doc, err := j.get(EvaluateListURL, "")
