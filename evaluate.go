@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/url"
 	"strings"
+	"sort"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -21,6 +22,20 @@ type Evaluate struct {
 	Status       int     `json:"status"`
 	Star         float64 `json:"star"`    //平均分
 	Comment      string  `json:"comment"` //评价内容
+}
+
+type EvaluateList []Evaluate
+
+func (el EvaluateList) Len() int {
+	return len(el)
+}
+
+func (el EvaluateList) Swap(i,j int)  {
+	el[i], el[j] = el[j], el[i]
+}
+
+func (el EvaluateList) Less(i,j int) bool {
+	return el[i].Status < el[j].Status
 }
 
 func (e *Evaluate) getParams() url.Values {
@@ -118,8 +133,6 @@ func getStarName(doc *goquery.Document) ([]string, error) {
 
 // Evaluate 评教
 func (j *Jwc) Evaluate(evaluate *Evaluate) error {
-	defer j.Logout()
-
 	// 检查是否已经评教
 	if evaluate.Status != 0 {
 		return errors.New("您已评价：" + evaluate.CourseName + "-" + evaluate.TeacherName)
@@ -171,10 +184,9 @@ func (j *Jwc) Evaluate(evaluate *Evaluate) error {
 }
 
 // GetEvaList 获取评教数据
-func (j *Jwc) GetEvaList() ([]Evaluate, error) {
-	defer j.Logout()
+func (j *Jwc) GetEvaList() (EvaluateList, error) {
 	doc, err := j.get(EvaluateListURL, "")
-	evaluateList := make([]Evaluate, 0)
+	evaluateList := make(EvaluateList, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -211,5 +223,6 @@ func (j *Jwc) GetEvaList() ([]Evaluate, error) {
 		}
 		evaluateList = append(evaluateList, *eva)
 	})
+	sort.Sort(evaluateList)
 	return evaluateList, nil
 }
