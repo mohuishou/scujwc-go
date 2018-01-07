@@ -99,6 +99,7 @@ func getSchedule(j Jwc) (data []Schedule, err error) {
 //教师解析，返回包含每个教师名字的数组
 func teacherParse(t string) (teachers []string) {
 	t = strings.TrimSpace(t)
+	t = strings.Replace(t, "*", "", -1)
 	teachers = strings.Split(t, " ")
 	return teachers
 }

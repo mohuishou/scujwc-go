@@ -48,7 +48,7 @@ func TestJwc_Evaluate(t *testing.T) {
 			name: "test",
 			j:    j,
 			args: args{
-				evaluate: &eva,
+				evaluate: eva,
 			},
 			wantErr: false,
 		},
