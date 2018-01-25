@@ -45,7 +45,7 @@ func (g Grades) get(j *Jwc, doc *goquery.Selection) []Grades {
 func (g Grades) getGPA(j *Jwc) ([]Grades, error) {
 	//获取goquery.Document 对象，以便解析需要的数据
 	url := DOMAIN + "/bxqcjcxAction.do"
-	doc, err := j.jPost(url, "")
+	doc, err := j.jPost(url, "pageSize=100")
 	if err != nil {
 		return nil, err
 	}
